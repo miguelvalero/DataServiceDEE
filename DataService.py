@@ -2,12 +2,8 @@ import paho.mqtt.client as mqtt
 import requests
 
 
-global_broker_address = "127.0.0.1"
-global_broker_port = 1884
-API_URL = "http://localhost:4000/data"
-
-
 def on_message(client, userdata, message):
+    global API_URL
     splited = message.topic.split("/")
     origin = splited[0]
     destination = splited[1]
@@ -32,12 +28,36 @@ def on_message(client, userdata, message):
         client.publish("dataService/" + origin + "/storedPositions", data_string)
 
 
-client = mqtt.Client("Data service")
-client.on_message = on_message
-client.connect(global_broker_address, global_broker_port)
-client.loop_start()
-print("Waiting commands")
-# By the moment, the data service only can store positions (sent by the autopilot service)
-# and provide the stored positions
-client.subscribe("autopilotService/dataService/storePosition")
-client.subscribe("+/dataService/getStoredPositions")
+def DataService(external_broker, username, password):
+    global API_URL
+    API_URL = "http://localhost:4000/data"
+    print("External broker: ", external_broker)
+    client = mqtt.Client("Data service", transport="websockets")
+    external_broker_address = external_broker
+    external_broker_port = 8000
+    if external_broker_address == "classpip.upc.edu":
+        client.username_pw_set(username, password)
+
+    client.on_message = on_message
+    client.connect(external_broker_address, external_broker_port)
+
+    # By the moment, the data service only can store positions (sent by the autopilot service)
+    # and provide the stored positions
+    client.subscribe("autopilotService/dataService/storePosition")
+    client.subscribe("+/dataService/getStoredPositions")
+    print("Waiting commands")
+
+    client.loop_forever()
+
+
+if __name__ == "__main__":
+    import sys
+
+    username = None
+    password = None
+    external_broker = sys.argv[1]
+    if external_broker == "classpip.upc.edu":
+        username = sys.argv[2]
+        password = sys.argv[3]
+
+    DataService(external_broker, username, password)
