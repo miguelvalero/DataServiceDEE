@@ -34,4 +34,4 @@ The table bellow indicates all the commands that are accepted by the data servic
 Command | Description          | Payload | Answer | Answer payload
 --- |----------------------| -- | --- |---
 *storePosition* | stores a position | *latitude\*longitude* | No | No
-*getStoredPositions* | provides the stored positions | No |  |Yes | string with stored positions
+*getStoredPositions* | provides the stored positions | No | Yes | string with stored positions
